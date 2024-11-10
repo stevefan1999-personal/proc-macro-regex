@@ -57,6 +57,7 @@ use syn::parse_macro_input;
 pub fn regex(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as MacroInput);
     let visibility = input.get_visibility();
+    let is_const = input.get_const();
     let name = input.get_name();
     let threshold = input.get_threshold();
     let (argument_type, body) = if input.is_str() {
@@ -79,7 +80,7 @@ pub fn regex(input: TokenStream) -> TokenStream {
         )
     };
     let function = quote! {
-        #visibility fn #name(s: &#argument_type) -> bool {
+        #visibility #is_const fn #name(s: &#argument_type) -> bool {
             #body
         }
     };

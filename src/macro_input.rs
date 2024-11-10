@@ -2,6 +2,7 @@ use proc_macro2::Span;
 use syn::{
     parse::{Parse, ParseStream, Result as ParseResult},
     spanned::Spanned,
+    token::Const,
     Ident, LitByteStr, LitInt, LitStr, Visibility,
 };
 
@@ -57,11 +58,13 @@ pub struct MacroInput {
     name: Ident,
     regex: Regex,
     threshold: usize,
+    is_const: Option<Const>,
 }
 
 impl Parse for MacroInput {
     fn parse(input: ParseStream) -> ParseResult<Self> {
         let visibility: Visibility = input.parse()?;
+        let is_const: Option<Const> = input.parse()?;
         let name: Ident = input.parse()?;
         let regex = input.parse()?;
         let lookahead = input.lookahead1();
@@ -76,6 +79,7 @@ impl Parse for MacroInput {
             name,
             regex,
             threshold,
+            is_const,
         })
     }
 }
@@ -103,5 +107,9 @@ impl MacroInput {
 
     pub fn get_threshold(&self) -> usize {
         self.threshold
+    }
+
+    pub fn get_const(&self) -> Option<Const> {
+        self.is_const
     }
 }

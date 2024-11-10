@@ -48,7 +48,9 @@ pub trait Character: Sized + Ord + TryFrom<u32> + Into<u32> {
 
     fn is_next(&self, other: &Self) -> bool;
 
-    fn get_iterator_function(is_byte: bool) -> Ident;
+    fn get_iterator_function(_is_byte: bool) -> Option<Ident> {
+        None
+    }
 
     fn to_usize(element: Ident, is_byte: bool) -> TokenStream;
 
@@ -113,12 +115,12 @@ impl Character for char {
         }
     }
 
-    fn get_iterator_function(is_byte: bool) -> Ident {
-        if is_byte {
-            Ident::new("bytes", Span::call_site())
+    fn get_iterator_function(is_byte: bool) -> Option<Ident> {
+        Some(if is_byte {
+            Ident::new("as_bytes", Span::call_site())
         } else {
             Ident::new("chars", Span::call_site())
-        }
+        })
     }
 
     fn to_usize(element: Ident, _is_byte: bool) -> TokenStream {
@@ -190,13 +192,9 @@ impl Character for u8 {
         }
     }
 
-    fn get_iterator_function(_is_byte: bool) -> Ident {
-        Ident::new("into_iter", Span::call_site())
-    }
-
     fn to_usize(element: Ident, _is_byte: bool) -> TokenStream {
         quote! {
-            *#element as usize
+            #element as usize
         }
     }
 

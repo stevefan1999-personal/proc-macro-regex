@@ -91,9 +91,10 @@ where
                 [#(#row),*]
             });
         }
+
         let len = table.len();
         let transitions = quote! {
-            static TABLE: [[#int_type; 256]; #len] = [#(#table),*]
+            const TABLE: [[#int_type; 256]; #len] = [#(#table),*]
         };
         Some(transitions)
     }
@@ -128,17 +129,23 @@ where
 
         let int_type = self.get_int_type()?;
         let transitions_lookup_table = self.transitions_lookup_table(&int_type)?;
-        let iterator = T::get_iterator_function(self.is_byte);
+        let iterator = match T::get_iterator_function(self.is_byte) {
+            Some(iterator) => quote! {s.#iterator()},
+            None => quote! {s},
+        };
         let c_to_usize = T::to_usize(Ident::new("c", Span::call_site()), self.is_byte);
         let check = self.for_each_lookup_table_check(&int_type);
         let for_each = quote! {
             #transitions_lookup_table;
             let mut state = 0;
 
-            for c in s.#iterator() {
+            let it = #iterator;
+            let mut i = 0;
+            while i < s.len() {
+                let c = it[i];
                 state = TABLE[state as usize][#c_to_usize];
-
                 #check
+                i += 1;
             }
         };
         Some(for_each)
